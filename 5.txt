@@ -1,6 +1,4 @@
 		WMat* masks2 = initialMat(height, width, 1);//ok
-
-		
 		int suminf = 0;
 		for (int i = 0; i < height; i++){
 			for (int j = 0; j < width; j++){
@@ -10,14 +8,12 @@
 		}
 		double inf_rate = double(suminf) / (height*width);
 		cout << "suminf: " << inf_rate << endl;
-		
 		WImage2WMat(inf_mask_exu, masks2);
-
-
 
 		//WMat* resmat2 = LaplacianBlend(black, white, mask);
 		WMat* resmat2 = LaplacianBlend(R, ef_Imgs->mats[ref_idx - 1], masks2);//ok
 		//WMat* resmat2 = LaplacianBlend(ef_Imgs->mats[1], ef_Imgs->mats[0], masks2);
+
 		Mat r2(height, width, CV_64FC3);
 
 		//guided filter
@@ -42,7 +38,6 @@
 		guidedfilter(tq, tq, tq, 3, 0.1);
 		SetMatChannel(resmat2, 2, tq);
 
-
 		if (NO_DEBUG_OUT){
 			Image2Mat(resmat2, r2);
 			r2.convertTo(r2, CV_8UC3);
@@ -53,21 +48,14 @@
 		freeImage(inf_mask_exu);
 		//	}
 
+		freeMats(ef_Imgs);
 		freeMat(R);
 		freeMat(tq);
 		//freeMat(tg);
 		freeMat(tgc);
-		freeMats(ef_Imgs);
 
 
 
-		/*****************************************************************************/
-		/*****************************************************************************/
-		/*************                                                   *************/
-		/*************                   ÆØ¹â¾ÀÕýtest                    *************/
-		/*************                                                   *************/
-		/*****************************************************************************/
-		/*****************************************************************************/
 		Mat test = r2;// imread("newres3.png");
 		WMat* Wtest = initialMat(test.rows, test.cols, 3);//ok
 		Mat2Image(test, Wtest);
@@ -78,11 +66,3 @@
 		//imshow("1", restest);
 		//waitKey(0);
 		freeMat(Wtest);
-		//freeMat(Wrestest);
-
-
-
-
-ff
-
-
