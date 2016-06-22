@@ -1,102 +1,85 @@
-	WMat* masks2 = initialMat(height, width, 1);//ok
+		WMat* masks2 = initialMat(height, width, 1);//ok
 
-
-	int suminf = 0;
-	for (int i = 0; i < height; i++){
-		for (int j = 0; j < width; j++){
-			if (inf_mask_exu->data[i*width + j])
-				suminf++;
+		//
+		int suminf = 0;
+		for (int i = 0; i < height; i++){
+			for (int j = 0; j < width; j++){
+				if (inf_mask_exu->data[i*width + j])
+					suminf++;
+			}
 		}
-	}
-	double inf_rate = double(suminf) / (height*width);
-	cout << "suminf: " << inf_rate << endl;
+		double inf_rate = double(suminf) / (height*width);
+		cout << "suminf: " << inf_rate << endl;
+		//
+		WImage2WMat(inf_mask_exu, masks2);
 
-	WImage2WMat(inf_mask_exu, masks2);
+		//inf_mask_exu
 
+		//WMat* resmat2 = LaplacianBlend(black, white, mask);
+		WMat* resmat2 = LaplacianBlend(R, ef_Imgs->mats[ref_idx - 1], masks2);//ok
+		//WMat* resmat2 = LaplacianBlend(ef_Imgs->mats[1], ef_Imgs->mats[0], masks2);
+		Mat r2(height, width, CV_64FC3);
 
-	//MatCopy(ef_Imgs->mats[0], white);
-	//MatCopy(resmat, black);
+		//guided filter
+		WMat* tq = initialMat(height, width, 1);//ok
 
-	//WMat* resmat2 = LaplacianBlend(black, white, mask);
-	WMat* resmat2;//ok
-	if (inf_rate > 0.2){
-		cout << "no" << endl;
-		resmat2 = initialMat(height, width, 3);
-		MatCopy(resmat, resmat2);// resmat;
-	}
-	else
-		resmat2 = LaplacianBlend(resmat, ef_Imgs->mats[ref_idx-1], masks2);
-	//WMat* resmat2 = LaplacianBlend(ef_Imgs->mats[1], ef_Imgs->mats[0], masks2);
-	Mat r2(height, width, CV_64FC3);
+		WMat* tg = ef_Imgs->mats[ref_idx];//ok
+		MatDIVValue(tg, tg, 255);
+		WMat* tgc = initialMat(height, width, 1);//ok
 
+		GetMatChannel(tg, tgc, 0);
+		GetMatChannel(resmat2, tq, 0);
+		guidedfilter(tq, tq, tq, 3, 0.1);
+		SetMatChannel(resmat2, 0, tq);
 
-	//guided filter
-	WMat* tq = initialMat(height, width, 1);//ok
+		GetMatChannel(tg, tgc, 1);
+		GetMatChannel(resmat2, tq, 1);
+		guidedfilter(tq, tq, tq, 3, 0.1);
+		SetMatChannel(resmat2, 1, tq);
 
-	WMat* tg = ef_Imgs->mats[ref_idx];
-	MatCopy(resmat2, tg);
-	//MatDIVValue(tg, tg, 255);
-	WMat* tgc = initialMat(height, width, 1);//ok
-
-	GetMatChannel(tg, tgc, 0);
-	GetMatChannel(resmat2, tq, 0);
-	guidedfilter(tq, tq, tq, 3, 0.1);
-	SetMatChannel(resmat2, 0, tq);
-
-	GetMatChannel(tg, tgc, 1);
-	GetMatChannel(resmat2, tq, 1);
-	guidedfilter(tq, tq, tq, 3, 0.1);
-	SetMatChannel(resmat2, 1, tq);
-
-	GetMatChannel(tg, tgc, 2);
-	GetMatChannel(resmat2, tq, 2);
-	guidedfilter(tq, tq, tq, 3, 0.1);
-	SetMatChannel(resmat2, 2, tq);
+		GetMatChannel(tg, tgc, 2);
+		GetMatChannel(resmat2, tq, 2);
+		guidedfilter(tq, tq, tq, 3, 0.1);
+		SetMatChannel(resmat2, 2, tq);
 
 
-
-	if (NO_DEBUG_OUT){
-		Image2Mat(resmat2, r2);
-		r2.convertTo(r2, CV_8UC3);
-		imwrite("result3.png", r2);
-	}
-	freeMat(resmat2);
-	freeMat(masks2);
-	freeImage(inf_mask_exu);
-	//	}
-
-	//imshow("newres", r);
-	//waitKey();
-	freeMats(ef_Imgs);
-	freeMat(R);
-	freeMat(tq);
-	//freeMat(tg);
-	freeMat(tgc);
-
-	freeMat(resmat);
+		if (NO_DEBUG_OUT){
+			Image2Mat(resmat2, r2);
+			r2.convertTo(r2, CV_8UC3);
+			imwrite("result3.png", r2);
+		}
+		freeMat(resmat2);
+		freeMat(masks2);
+		freeImage(inf_mask_exu);
+		//	}
 
 
+		freeMat(R);
 
-	/*****************************************************************************/
-	/*****************************************************************************/
-	/*************                                                   *************/
-	/*************               曝光纠正test                        *************/
-	/*************                                                   *************/
-	/*****************************************************************************/
-	/*****************************************************************************/
-	Mat test = r2;// imread("newres3.png");
-	WMat* Wtest = initialMat(test.rows, test.cols, 3);
-	Mat2Image(test, Wtest);
-	final_res = localExposureCorrection(Wtest);
-	Mat restest(test.rows, test.cols, CV_64FC3);
+		freeMat(tq);
+		//freeMat(tg);
+		freeMat(tgc);
 
-	Image2Mat(final_res, restest);
-	restest.convertTo(restest, CV_8UC3);
-	//imshow("1", restest);
-	//waitKey(0);
-	if (NO_DEBUG_OUT){
-		//imwrite("result4.png", restest);
-	}
 
-	//system("pause");
-	freeMat(Wtest);
+		//}
+		freeMats(ef_Imgs);
+
+		//}
+
+		/*****************************************************************************/
+		/*****************************************************************************/
+		/*************                                                   *************/
+		/*************                   曝光纠正test                    *************/
+		/*************                                                   *************/
+		/*****************************************************************************/
+		/*****************************************************************************/
+		Mat test = r2;// imread("newres3.png");
+		WMat* Wtest = initialMat(test.rows, test.cols, 3);//ok
+		Mat2Image(test, Wtest);
+		final_res = localExposureCorrection(Wtest);//ok
+		Mat restest(test.rows, test.cols, CV_64FC3);
+		Image2Mat(final_res, restest);
+		restest.convertTo(restest, CV_8UC3);
+		//imshow("1", restest);
+		//waitKey(0);
+		freeMat(Wtest);
